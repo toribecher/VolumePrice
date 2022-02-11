@@ -15,28 +15,46 @@ func GetVWap(input chan helper.Match) {
 	pairInfo.TotalSpent = make(map[string]float64)
 	pairInfo.VolumeWeightedAveragePrice = make(map[string]float64)
 	for match := range input {
-		if match.Size == "" {
-			continue
-		}
-		var size float64
-		var price float64
-		var err error
-		size, err = strconv.ParseFloat(match.Size, 64)
-		price, err = strconv.ParseFloat(match.Price, 64)
-		if err != nil {
-			fmt.Printf("string conversion error %s", err)
-			return
-		}
-		if len(pairInfo.Matches[match.ProductId]) > maxLimit {
-			pairInfo.Matches[match.ProductId] = append(pairInfo.Matches[match.ProductId][:0], pairInfo.Matches[match.ProductId][1:]...)
-		}
-		totalSpent := size * price
-		volumeWeightedAverage := calculateVolumeWeightedAveragePrice(pairInfo.TotalSpent[match.ProductId]+totalSpent, pairInfo.TotalShares[match.ProductId]+size)
-		pairInfo.VolumeWeightedAveragePrice[match.ProductId] = volumeWeightedAverage
-		pairInfo.TotalSpent[match.ProductId] = totalSpent + size
-		pairInfo.Matches[match.ProductId] = append(pairInfo.Matches[match.ProductId], match)
-		fmt.Println(pairInfo.VolumeWeightedAveragePrice)
+		printedPairInfo := doCalculations(match, pairInfo)
+		fmt.Println(printedPairInfo.VolumeWeightedAveragePrice)
 	}
+}
+
+func doCalculations(match helper.Match, pairInfo helper.PairInfo) helper.PairInfo {
+	//fmt.Println(match)
+	if match.Size == "" {
+		return helper.PairInfo{}
+	}
+	var size float64
+	var price float64
+	var err error
+	size, err = strconv.ParseFloat(match.Size, 64)
+	price, err = strconv.ParseFloat(match.Price, 64)
+	if err != nil {
+		fmt.Printf("string conversion error %s", err)
+		return helper.PairInfo{}
+	}
+	if len(pairInfo.Matches[match.ProductId]) > maxLimit {
+		pairInfo.Matches[match.ProductId] = append(pairInfo.Matches[match.ProductId][:0], pairInfo.Matches[match.ProductId][1:]...)
+	}
+	//fmt.Println("size")
+	//fmt.Println(size)
+	//fmt.Println("price")
+	//fmt.Println(price)
+	//fmt.Println("total spent")
+	totalSpent := size * price
+	//fmt.Println(pairInfo.TotalSpent[match.ProductId] + totalSpent)
+	//fmt.Println("total bought")
+	//fmt.Println(pairInfo.TotalShares[match.ProductId] + size)
+
+	volumeWeightedAverage := calculateVolumeWeightedAveragePrice(pairInfo.TotalSpent[match.ProductId]+totalSpent, pairInfo.TotalShares[match.ProductId]+size)
+	pairInfo.VolumeWeightedAveragePrice[match.ProductId] = volumeWeightedAverage
+	pairInfo.TotalSpent[match.ProductId] = pairInfo.TotalSpent[match.ProductId] + totalSpent
+	pairInfo.TotalShares[match.ProductId] = pairInfo.TotalShares[match.ProductId] + size
+	pairInfo.Matches[match.ProductId] = append(pairInfo.Matches[match.ProductId], match)
+	//fmt.Println("volume weighted average")
+	//fmt.Println(volumeWeightedAverage)
+	return pairInfo
 }
 
 func calculateVolumeWeightedAveragePrice(totalSpent, totalSharesBought float64) float64 {
