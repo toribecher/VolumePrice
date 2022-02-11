@@ -3,6 +3,7 @@ package vwap
 import (
 	"VolumePrice/helper"
 	"fmt"
+	"log"
 	"strconv"
 )
 
@@ -16,7 +17,7 @@ func GetVWap(input chan helper.Match) {
 	pairInfo.VolumeWeightedAveragePrice = make(map[string]float64)
 	for match := range input {
 		printedPairInfo := doCalculations(match, pairInfo)
-		fmt.Println(printedPairInfo.VolumeWeightedAveragePrice)
+		log.Println(printedPairInfo.VolumeWeightedAveragePrice)
 	}
 }
 
