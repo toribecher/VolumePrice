@@ -43,10 +43,21 @@ func (suite *vWapSuite) TestCalculation() {
 
 func (suite *vWapSuite) TestCalculation2() {
 	match := helper.Match{ProductId: "BTC-USD", Price: "42931.74", Size: "0.00116661"}
-	match2 := helper.Match{ProductId: "ETH-BTC", Price: "0.07094", Size: "0.00131352"}
-	suite.pairInfo.Matches[]
+	//match2 := helper.Match{ProductId: "ETH-BTC", Price: "0.07094", Size: "0.00131352"}
+	//suite.pairInfo.Matches[]
 	calculatedInfo := doCalculations(match, suite.pairInfo)
 	suite.Equal(42931.74, calculatedInfo.VolumeWeightedAveragePrice["BTC-USD"])
+}
+
+func (suite *vWapSuite) TestCalculation3() {
+	match := helper.Match{ProductId: "BTC-USD", Price: "42931.74", Size: "0.00116661"}
+	//match2 := helper.Match{ProductId: "ETH-BTC", Price: "0.07094", Size: "0.00131352"}
+	calculatedInfo := doCalculations(match, suite.pairInfo)
+	suite.Equal(42931.74, calculatedInfo.VolumeWeightedAveragePrice["BTC-USD"])
+}
+
+func (suite *vWapSuite) TestRemove() {
+
 }
 
 //data {BTC-USD 42931.74 0.00116661}
