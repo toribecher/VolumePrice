@@ -60,6 +60,14 @@ func (suite *vWapSuite) TestRemove() {
 
 }
 
+func (suite *vWapSuite) TestVWapWorks() {
+	matches := make(chan helper.Match, 1)
+	match := helper.Match{ProductId: "BTC-USD", Price: "42931.74", Size: "0.00116661"}
+	go GetVWap(matches)
+	matches <- match
+	suite.Empty(matches)
+}
+
 //data {BTC-USD 42931.74 0.00116661}
 //{ETH-USD 3045.93 0.00242001}
 //{ETH-BTC 0.07094 0.00131352}
