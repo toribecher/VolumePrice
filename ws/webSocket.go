@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+var pairs = []string{"BTC-USD", "ETH-USD", "ETH-BTC"}
+
 type SubscribeReq struct {
 	Type       string   `json:"type"`
 	ProductIds []string `json:"product_ids"`
@@ -37,7 +39,7 @@ func (w WebSocket) SubscribeAndRead(matches chan helper.Match) error {
 	}
 	subscribeReq := SubscribeReq{
 		Type:       "subscribe",
-		ProductIds: []string{"BTC-USD", "ETH-USD", "ETH-BTC"},
+		ProductIds: pairs,
 		Channels:   []string{"matches"},
 	}
 	data, _ := json.Marshal(subscribeReq)
