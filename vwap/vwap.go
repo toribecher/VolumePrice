@@ -33,9 +33,8 @@ func doCalculations(match helper.Match, pairInfo helper.PairInfo) helper.PairInf
 		fmt.Printf("string conversion error %s", err)
 		return helper.PairInfo{}
 	}
-	if len(pairInfo.Matches[match.ProductId]) > maxLimit {
-		removePair(pairInfo, match.ProductId)
-	}
+	removePairCheck(pairInfo, match.ProductId, maxLimit, match)
+
 	totalSpent := size * price
 	volumeWeightedAverage := calculateVolumeWeightedAveragePrice(pairInfo.TotalSpent[match.ProductId]+totalSpent, pairInfo.TotalShares[match.ProductId]+size)
 	pairInfo.VolumeWeightedAveragePrice[match.ProductId] = volumeWeightedAverage
@@ -45,22 +44,22 @@ func doCalculations(match helper.Match, pairInfo helper.PairInfo) helper.PairInf
 	return pairInfo
 }
 
-func removePair(pairInfo helper.PairInfo, productId string) {
-	fmt.Println("hit max")
-	match := pairInfo.Matches[productId][0]
-	var size float64
-	var price float64
-	var err error
-	size, err = strconv.ParseFloat(match.Size, 64)
-	price, err = strconv.ParseFloat(match.Price, 64)
-	if err != nil {
-		fmt.Println("parsing error")
-		return
+func removePairCheck(pairInfo helper.PairInfo, productId string, maxLimit int, match helper.Match) {
+	if len(pairInfo.Matches[match.ProductId]) > maxLimit {
+		var size float64
+		var price float64
+		var err error
+		size, err = strconv.ParseFloat(match.Size, 64)
+		price, err = strconv.ParseFloat(match.Price, 64)
+		if err != nil {
+			fmt.Println("parsing error")
+			return
+		}
+		totalSpent := price * size
+		pairInfo.TotalSpent[productId] = pairInfo.TotalSpent[productId] - totalSpent
+		pairInfo.TotalShares[productId] = pairInfo.TotalShares[productId] - size
+		pairInfo.Matches[productId] = append(pairInfo.Matches[productId][:0], pairInfo.Matches[productId][1:]...)
 	}
-	totalSpent := price * size
-	pairInfo.TotalSpent[productId] = pairInfo.TotalSpent[productId] - totalSpent
-	pairInfo.TotalShares[productId] = pairInfo.TotalShares[productId] - size
-	pairInfo.Matches[productId] = append(pairInfo.Matches[productId][:0], pairInfo.Matches[productId][1:]...)
 }
 
 func calculateVolumeWeightedAveragePrice(totalSpent, totalSharesBought float64) float64 {
