@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-const maxLimit = 200
+const maxLimit = 3
 
 func GetVWap(input chan helper.Match) {
 	var pairInfo helper.PairInfo
@@ -34,7 +34,7 @@ func doCalculations(match helper.Match, pairInfo helper.PairInfo) helper.PairInf
 		fmt.Printf("string conversion error %s", err)
 		return helper.PairInfo{}
 	}
-	removePairCheck(pairInfo, match.ProductId, maxLimit, match)
+	removePairCheck(&pairInfo, match.ProductId, maxLimit)
 
 	totalSpent := size * price
 	volumeWeightedAverage := calculateVolumeWeightedAveragePrice(pairInfo.TotalSpent[match.ProductId]+totalSpent, pairInfo.TotalShares[match.ProductId]+size)
@@ -45,13 +45,14 @@ func doCalculations(match helper.Match, pairInfo helper.PairInfo) helper.PairInf
 	return pairInfo
 }
 
-func removePairCheck(pairInfo helper.PairInfo, productId string, maxLimit int, match helper.Match) {
-	if len(pairInfo.Matches[match.ProductId]) > maxLimit {
+func removePairCheck(pairInfo *helper.PairInfo, productId string, maxLimit int) {
+	if len(pairInfo.Matches[productId]) > maxLimit {
+		removedMatch := pairInfo.Matches[productId][0]
 		var size float64
 		var price float64
 		var err error
-		size, err = strconv.ParseFloat(match.Size, 64)
-		price, err = strconv.ParseFloat(match.Price, 64)
+		size, err = strconv.ParseFloat(removedMatch.Size, 64)
+		price, err = strconv.ParseFloat(removedMatch.Price, 64)
 		if err != nil {
 			fmt.Println("parsing error")
 			return

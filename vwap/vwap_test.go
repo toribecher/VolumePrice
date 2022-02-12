@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"testing"
+	"time"
 )
 
 type vWapSuite struct {
@@ -42,22 +43,54 @@ func (suite *vWapSuite) TestCalculation() {
 }
 
 func (suite *vWapSuite) TestCalculation2() {
-	match := helper.Match{ProductId: "BTC-USD", Price: "42931.74", Size: "0.00116661"}
-	//match2 := helper.Match{ProductId: "ETH-BTC", Price: "0.07094", Size: "0.00131352"}
-	//suite.pairInfo.Matches[]
+	match := helper.Match{ProductId: "BTC-USD", Price: "10", Size: "100"}
+	// reference matches for sanity's sake
+	//match2 := helper.Match{ProductId: "BTC-USD", Price: "8", Size: "300"}
+	//match3 := helper.Match{ProductId: "BTC-USD", Price: "11", Size: "200"}
+	suite.pairInfo.TotalSpent["BTC-USD"] = suite.pairInfo.TotalSpent["BTC-USD"] + (float64(300) * float64(8))
+	suite.pairInfo.TotalShares["BTC-USD"] = suite.pairInfo.TotalShares["BTC-USD"] + 300
+	suite.pairInfo.TotalSpent["BTC-USD"] = suite.pairInfo.TotalSpent["BTC-USD"] + (float64(11) * float64(200))
+	suite.pairInfo.TotalShares["BTC-USD"] = suite.pairInfo.TotalShares["BTC-USD"] + 200
 	calculatedInfo := doCalculations(match, suite.pairInfo)
-	suite.Equal(42931.74, calculatedInfo.VolumeWeightedAveragePrice["BTC-USD"])
+	suite.Equal(9.333333333333334, calculatedInfo.VolumeWeightedAveragePrice["BTC-USD"])
 }
 
 func (suite *vWapSuite) TestCalculation3() {
-	match := helper.Match{ProductId: "BTC-USD", Price: "42931.74", Size: "0.00116661"}
-	//match2 := helper.Match{ProductId: "ETH-BTC", Price: "0.07094", Size: "0.00131352"}
+	match := helper.Match{ProductId: "ETH-BTC", Price: "0.1", Size: "0.1"}
 	calculatedInfo := doCalculations(match, suite.pairInfo)
-	suite.Equal(42931.74, calculatedInfo.VolumeWeightedAveragePrice["BTC-USD"])
+	suite.Equal(0.10000000000000002, calculatedInfo.VolumeWeightedAveragePrice["ETH-BTC"])
+}
+
+func (suite *vWapSuite) TestEmptyCalculation() {
+	match := helper.Match{ProductId: "ETH-BTC", Price: "0", Size: "0"}
+	calculatedInfo := doCalculations(match, suite.pairInfo)
+	suite.NotEmpty(calculatedInfo.VolumeWeightedAveragePrice["ETH-BTC"])
+	match2 := helper.Match{ProductId: "ETH-BTC", Price: "0.1", Size: "0.1"}
+	calculatedInfo2 := doCalculations(match2, suite.pairInfo)
+	suite.Equal(0.10000000000000002, calculatedInfo2.VolumeWeightedAveragePrice["ETH-BTC"])
 }
 
 func (suite *vWapSuite) TestRemove() {
+	match := helper.Match{ProductId: "BTC-USD", Price: "10", Size: "100"}
+	match2 := helper.Match{ProductId: "BTC-USD", Price: "8", Size: "300"}
+	match3 := helper.Match{ProductId: "BTC-USD", Price: "11", Size: "200"}
+	match4 := helper.Match{ProductId: "BTC-USD", Price: "12", Size: "400"}
+	suite.pairInfo.Matches["BTC-USD"] = append(suite.pairInfo.Matches["BTC-USD"], match)
+	suite.pairInfo.Matches["BTC-USD"] = append(suite.pairInfo.Matches["BTC-USD"], match2)
+	suite.pairInfo.Matches["BTC-USD"] = append(suite.pairInfo.Matches["BTC-USD"], match3)
+	suite.pairInfo.TotalSpent["BTC-USD"] = suite.pairInfo.TotalSpent["BTC-USD"] + (float64(300) * float64(8))
+	suite.pairInfo.TotalShares["BTC-USD"] = suite.pairInfo.TotalShares["BTC-USD"] + 300
+	suite.pairInfo.TotalSpent["BTC-USD"] = suite.pairInfo.TotalSpent["BTC-USD"] + (float64(11) * float64(200))
+	suite.pairInfo.TotalShares["BTC-USD"] = suite.pairInfo.TotalShares["BTC-USD"] + 200
+	calculatedInfo := doCalculations(match4, suite.pairInfo)
+	suite.Equal(10.444444444444445, calculatedInfo.VolumeWeightedAveragePrice["BTC-USD"])
+	suite.Equal(4, len(suite.pairInfo.Matches["BTC-USD"]))
+	suite.Equal(helper.Match{ProductId: "BTC-USD", Price: "10", Size: "100"}, suite.pairInfo.Matches["BTC-USD"][0])
 
+	removePairCheck(&suite.pairInfo, "BTC-USD", 3)
+	suite.Equal(3, len(suite.pairInfo.Matches["BTC-USD"]))
+	suite.NotEqual(helper.Match{ProductId: "BTC-USD", Price: "10", Size: "100"}, suite.pairInfo.Matches["BTC-USD"][0])
+	suite.Equal(helper.Match{ProductId: "BTC-USD", Price: "8", Size: "300"}, suite.pairInfo.Matches["BTC-USD"][0])
 }
 
 func (suite *vWapSuite) TestVWapWorks() {
@@ -65,24 +98,6 @@ func (suite *vWapSuite) TestVWapWorks() {
 	match := helper.Match{ProductId: "BTC-USD", Price: "42931.74", Size: "0.00116661"}
 	go GetVWap(matches)
 	matches <- match
+	time.Sleep(time.Second * 1)
 	suite.Empty(matches)
 }
-
-//data {BTC-USD 42931.74 0.00116661}
-//{ETH-USD 3045.93 0.00242001}
-//{ETH-BTC 0.07094 0.00131352}
-//{ETH-USD 3045.92 0.001}
-//{ETH-USD 3045.41 0.00312232}
-//{ETH-USD 3045.25 0.00266478}
-//{ETH-USD 3045.24 0.44113937}
-//{ETH-USD 3045.24 0.0005}
-//{ETH-USD 3045.25 0.20214651}
-//{ETH-USD 3045.25 0.15990915}
-//{ETH-USD 3045.25 0.07408304}
-//{ETH-USD 3045.26 0.18811}
-//{ETH-USD 3045.26 0.00000808}
-//{ETH-USD 3045.42 0.00099192}
-//{BTC-USD 42933.99 0.05208915}
-//{BTC-USD 42933.99 0.02328879}
-//{BTC-USD 42933.04 0.04420668}
-//{BTC-USD 42932.38 0.05}
