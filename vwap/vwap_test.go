@@ -93,6 +93,48 @@ func (suite *vWapSuite) TestRemove() {
 	suite.Equal(helper.Match{ProductId: "BTC-USD", Price: "8", Size: "300"}, suite.pairInfo.Matches["BTC-USD"][0])
 }
 
+func (suite *vWapSuite) TestArrayFunctionRemove() {
+	pairInfo := helper.PairInfo{}
+	newPairInfo := remove(&pairInfo, "")
+	suite.Equal(*newPairInfo, pairInfo)
+}
+
+func (suite *vWapSuite) TestNilRemove() {
+	newPairInfo := remove(nil, "")
+	suite.Equal(newPairInfo, &helper.PairInfo{})
+}
+
+func (suite *vWapSuite) TestActualRemove() {
+	match := helper.Match{ProductId: "BTC-USD", Price: "10", Size: "100"}
+	suite.pairInfo.Matches["BTC-USD"] = append(suite.pairInfo.Matches["BTC-USD"], match)
+	suite.Len(suite.pairInfo.Matches["BTC-USD"], 1)
+	newPairInfo := remove(&suite.pairInfo, "BTC-USD")
+
+	suite.Len(newPairInfo.Matches["BTC-USD"], 0)
+}
+
+func (suite *vWapSuite) TestMultipleRemoves() {
+	match := helper.Match{ProductId: "BTC-USD", Price: "10", Size: "100"}
+	match2 := helper.Match{ProductId: "BTC-USD", Price: "22", Size: "222"}
+	match3 := helper.Match{ProductId: "BTC-USD", Price: "33", Size: "333"}
+	suite.pairInfo.Matches["BTC-USD"] = append(suite.pairInfo.Matches["BTC-USD"], match)
+	suite.pairInfo.Matches["BTC-USD"] = append(suite.pairInfo.Matches["BTC-USD"], match2)
+	suite.pairInfo.Matches["BTC-USD"] = append(suite.pairInfo.Matches["BTC-USD"], match3)
+	suite.Len(suite.pairInfo.Matches["BTC-USD"], 3)
+	suite.Equal(suite.pairInfo.Matches["BTC-USD"][0], match)
+	suite.Equal(suite.pairInfo.Matches["BTC-USD"][1], match2)
+	suite.Equal(suite.pairInfo.Matches["BTC-USD"][2], match3)
+	newPairInfo := remove(&suite.pairInfo, "BTC-USD")
+	suite.Len(newPairInfo.Matches["BTC-USD"], 2)
+	suite.Equal(suite.pairInfo.Matches["BTC-USD"][0], match2)
+	suite.Equal(suite.pairInfo.Matches["BTC-USD"][1], match3)
+	newPairInfo2 := remove(&suite.pairInfo, "BTC-USD")
+	suite.Len(newPairInfo2.Matches["BTC-USD"], 1)
+	suite.Equal(suite.pairInfo.Matches["BTC-USD"][0], match3)
+	newPairInfo3 := remove(&suite.pairInfo, "BTC-USD")
+	suite.Len(newPairInfo3.Matches["BTC-USD"], 0)
+}
+
 func (suite *vWapSuite) TestVWapWorks() {
 	matches := make(chan helper.Match, 1)
 	match := helper.Match{ProductId: "BTC-USD", Price: "42931.74", Size: "0.00116661"}
