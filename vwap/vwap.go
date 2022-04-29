@@ -4,6 +4,7 @@ import (
 	"VolumePrice/helper"
 	"fmt"
 	"log"
+	"reflect"
 	"strconv"
 )
 
@@ -60,8 +61,19 @@ func removePairCheck(pairInfo *helper.PairInfo, productId string, maxLimit int) 
 		totalSpent := price * size
 		pairInfo.TotalSpent[productId] = pairInfo.TotalSpent[productId] - totalSpent
 		pairInfo.TotalShares[productId] = pairInfo.TotalShares[productId] - size
-		pairInfo.Matches[productId] = append(pairInfo.Matches[productId][:0], pairInfo.Matches[productId][1:]...)
+		remove(pairInfo, productId)
 	}
+}
+
+func remove(pairInfo *helper.PairInfo, productId string) *helper.PairInfo {
+	if pairInfo == nil {
+		return &helper.PairInfo{}
+	}
+	if (reflect.DeepEqual(&helper.PairInfo{}, pairInfo)) {
+		return pairInfo
+	}
+	pairInfo.Matches[productId] = append(pairInfo.Matches[productId][:0], pairInfo.Matches[productId][1:]...)
+	return pairInfo
 }
 
 func calculateVolumeWeightedAveragePrice(totalSpent, totalSharesBought float64) float64 {
